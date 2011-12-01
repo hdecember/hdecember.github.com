@@ -42,25 +42,13 @@ package seed.utils.net
 			}
 		}
 		
-		override public function load():void
+		override protected function loadStart():void
 		{
-			dispatchEvent(new SeedLoaderEvent(SeedLoaderEvent.OPEN,this));
-			if (_useCache)
-			{
-				_content = CachePool.getInstance().getLoadedFile(_url);
-			}
-			if (_content == null)
-			{
-				_urlLoader = new URLLoader();
-				_urlLoader.dataFormat = URLLoaderDataFormat.BINARY;
-				_urlLoader.addEventListener(Event.COMPLETE, onLoaderComplete);
-				_urlLoader.addEventListener(ProgressEvent.PROGRESS, onProgressEvent)
-				_urlLoader.load(new URLRequest(_url));
-			}
-			else
-			{
-				dispatchEvent(new SeedLoaderEvent(SeedLoaderEvent.COMPLETE,this));
-			}
+			_urlLoader = new URLLoader();
+			_urlLoader.dataFormat = URLLoaderDataFormat.BINARY;
+			_urlLoader.addEventListener(Event.COMPLETE, onLoaderComplete);
+			_urlLoader.addEventListener(ProgressEvent.PROGRESS, onProgressEvent);
+			_urlLoader.load(new URLRequest(_url));
 		}
 		
 		private function onProgressEvent(e:ProgressEvent):void
@@ -90,20 +78,39 @@ package seed.utils.net
 		{
 			_content = (e.target as LoaderInfo).loader.content;
 			CachePool.getInstance().loadFile(_url, _content);
+			CachePool.getInstance().unRegisterLoader(this);
 			dispatchEvent(new SeedLoaderEvent(SeedLoaderEvent.COMPLETE,this));
 		}
 		
 		public function get bytesTotal():uint 
 		{
-			return _urlLoader.bytesTotal;
+			if (_urlLoader)
+			{
+				return _urlLoader.bytesTotal;
+			}
+			else
+			{
+				return SeedSWFLoader(CachePool.getInstance().checkLoadingQueue(url)).bytesTotal;
+			}
 		}
 		public function get bytesLoaded():uint
 		{
-			return _urlLoader.bytesLoaded;
+			if (_urlLoader)
+			{
+				return _urlLoader.bytesLoaded;
+			}
+			else
+			{
+				return SeedSWFLoader(CachePool.getInstance().checkLoadingQueue(url)).bytesLoaded;
+			}
 		}
 		override public function get progress():Number 
 		{
 			return (bytesLoaded/bytesTotal);
+		}
+		override public function get url():String 
+		{
+			return _url;
 		}
 	}
 

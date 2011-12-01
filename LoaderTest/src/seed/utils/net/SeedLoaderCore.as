@@ -9,6 +9,8 @@ package  seed.utils.net
 	{
 		private var _name:String;
 		private var _progress:Number;
+		private var _content:*;
+		
 		public function SeedLoaderCore(name:String = null) 
 		{
 			if (name)
@@ -19,30 +21,11 @@ package  seed.utils.net
 			{
 				_name = generateUniqueName();
 			}
-			
 		}
-		public function load():void
-		{
-			
-		}
-		public function destroy():void
-		{
-			
-		}
-		public function get progress():Number
-		{
-			return 1;
-		}
-		public function get name():String 
-		{
-			return _name;
-		}
-		
-		public function set name(value:String):void 
-		{
-			_name = value;
-		}
-		
+
+		/////////////////////////////////////////
+		//私有函数
+		/////////////////////////////////////////
 		protected function _passThroughEvent(event:SeedLoaderEvent):void {
 			var type:String = event.type;
 			var target:Object = this;
@@ -64,6 +47,10 @@ package  seed.utils.net
 				dispatchEvent(new SeedLoaderEvent(type, target , (event is SeedLoaderEvent && SeedLoaderEvent(event).data != null) ? SeedLoaderEvent(event).data : null));
 			}
 		}
+		protected function loadStart():void
+		{
+			
+		}
 		/////////////////////////////////////////
 		//静态变量及函数
 		/////////////////////////////////////////
@@ -72,6 +59,56 @@ package  seed.utils.net
 		{
 			id++;
 			return "SeedLoader" + id;
+		}
+		/////////////////////////////////////////
+		//公共接口
+		/////////////////////////////////////////
+		public function load():void
+		{
+			dispatchEvent(new SeedLoaderEvent(SeedLoaderEvent.OPEN, this));
+			_content = CachePool.getInstance().getLoadedFile(url);
+			if (_content)
+			{
+				dispatchEvent(new SeedLoaderEvent(SeedLoaderEvent.COMPLETE, this));
+				return;
+			}
+			else
+			{
+				var loader:SeedLoaderCore = CachePool.getInstance().checkLoadingQueue(url);
+				if (loader)
+				{
+					loader.addEventListener(SeedLoaderEvent.PROGRESS, _passThroughEvent);
+					loader.addEventListener(SeedLoaderEvent.FAIL, _passThroughEvent);
+					loader.addEventListener(SeedLoaderEvent.COMPLETE, _passThroughEvent);
+					return;
+				}
+				else
+				{
+					CachePool.getInstance().registerLoader(this);
+				}
+			}
+			loadStart();
+		}
+
+		public function unload():void
+		{
+			
+		}
+		public function get progress():Number
+		{
+			return NaN;
+		}
+		public function get name():String 
+		{
+			return _name;
+		}
+		public function get content():*
+		{
+			return _content;
+		}
+		public function get url():String
+		{
+			return "";
 		}
 	}
 

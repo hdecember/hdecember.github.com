@@ -15,6 +15,8 @@ package seed.utils.net
 		private var _maxLoaderCount:int;
 		private var _loaderList:Array;
 		
+		private var _cachePool:CachePool = CachePool.getInstance();
+		
 		public function SeedQueueLoader(maxLoaderCount:int = 1) 
 		{
 			_maxLoaderCount = Math.max(1, maxLoaderCount);
@@ -64,6 +66,10 @@ package seed.utils.net
 			if (e != null)
 			{
 				_filesLoaded++;
+				if (_filesTotal == _filesLoaded)
+				{
+					dispatchEvent(new SeedLoaderEvent(SeedLoaderEvent.COMPLETE,this));
+				}
 				_passThroughEvent(e);
 				dispatchEvent(new SeedLoaderEvent(SeedLoaderEvent.PROGRESS,this));
 			}
@@ -74,12 +80,8 @@ package seed.utils.net
 				currentLoader.addEventListener(SeedLoaderEvent.PROGRESS, _passThroughEvent);
 				currentLoader.addEventListener(SeedLoaderEvent.COMPLETE, loadNext);
 				currentLoader.addEventListener(SeedLoaderEvent.FAIL, onLoaderError);
-				currentLoader.load();
 				_currentLoadingIndex++;
-			}
-			if (_filesTotal == _filesLoaded)
-			{
-				dispatchEvent(new SeedLoaderEvent(SeedLoaderEvent.COMPLETE,this));
+				currentLoader.load();
 			}
 		}
 		

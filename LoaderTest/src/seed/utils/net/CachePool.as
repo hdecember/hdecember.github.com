@@ -1,5 +1,6 @@
 package seed.utils.net 
 {
+	import flash.display.Loader;
 	import flash.utils.ByteArray;
 	import flash.utils.Dictionary;
 	/**
@@ -10,9 +11,11 @@ package seed.utils.net
 	{
 		private static var _instance:CachePool;
 		private var _pool:Dictionary;
+		private var _loaders:Dictionary;
 		public function CachePool(singleton:Singleton) 
 		{
 			_pool = new Dictionary();
+			_loaders = new Dictionary();
 		}
 		/**
 		 * 单例
@@ -67,6 +70,25 @@ package seed.utils.net
 				return _pool[url];
 			else
 				return null;
+		}
+		
+		public function checkLoadingQueue(url:String):SeedLoaderCore
+		{
+			if (_loaders[url] != null)
+				return _loaders[url];
+			else
+				return null;
+		}
+		public function registerLoader(loader:SeedLoaderCore):void
+		{
+			_loaders[loader.url] = loader;
+		}
+		public function unRegisterLoader(loader:SeedLoaderCore):void
+		{
+			if (_loaders[loader.url] != null)
+			{
+				delete _loaders[loader.url];
+			}
 		}
 	}
 
